@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSINT Intelligence — Argus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tailwindcss/browser/4"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #0a0a0f; overflow: hidden; height: 100vh; width: 100vw; }
+  body { font-family: 'Inter', sans-serif; color: #e8e8f0; }
+  .deck { width: 100vw; height: 100vh; position: relative; }
+  .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0f; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: scale(0.97); transition: opacity 0.65s ease, transform 0.65s ease; pointer-events: none; overflow: hidden; }
+  .slide.active { opacity: 1; transform: scale(1); pointer-events: all; }
+  .slide .content { position: relative; z-index: 2; width: 100%; max-width: 1100px; padding: clamp(1.5rem,4vw,3.5rem); }
+  .nav-controls { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; z-index: 100; background: rgba(0,255,136,0.05); backdrop-filter: blur(12px); padding: 9px 22px; border-radius: 40px; border: 1px solid rgba(0,255,136,0.12); }
+  .nav-btn { width: 38px; height: 38px; border: none; background: rgba(0,255,136,0.06); color: #00ff88; border-radius: 50%; font-size: 1.15rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.25s; }
+  .nav-btn:hover { background: rgba(0,255,136,0.14); }
+  .slide-dots { display: flex; gap: 7px; }
+  .slide-dots .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(0,255,136,0.15); cursor: pointer; transition: background 0.3s, transform 0.3s; }
+  .slide-dots .dot.active { background: #00ff88; transform: scale(1.35); }
+  .slide-counter { font-size: 0.75rem; color: #6060a0; min-width: 38px; text-align: center; font-family: 'JetBrains Mono', monospace; }
+  .reveal { opacity: 0; transform: translateY(18px); }
+  .scanlines::before { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); }
+  @keyframes glow-pulse { 0%,100% { text-shadow: 0 0 20px rgba(0,255,136,0.5), 0 0 40px rgba(0,255,136,0.2); } 50% { text-shadow: 0 0 32px rgba(0,255,136,0.8), 0 0 60px rgba(0,255,136,0.35); } }
+  .glow-pulse { animation: glow-pulse 2.8s ease-in-out infinite; }
+  .stat-glow { text-shadow: 0 0 30px rgba(0,255,136,0.6), 0 0 60px rgba(0,255,136,0.25); }
+  @keyframes float-slow { 0% { transform: translate(0,0) scale(1); } 25% { transform: translate(60px,-50px) scale(1.15); } 75% { transform: translate(-40px,40px) scale(0.92); } 100% { transform: translate(0,0) scale(1); } }
+  @keyframes float-drift { 0% { transform: translate(0,0) scale(1) rotate(0deg); } 33% { transform: translate(-50px,-60px) scale(1.13) rotate(3deg); } 66% { transform: translate(40px,30px) scale(0.9) rotate(-2deg); } 100% { transform: translate(0,0) scale(1) rotate(0deg); } }
+  .gradient-mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(80px); animation: float-slow 11s ease-in-out infinite; }
+  .blob:nth-child(2) { animation: float-drift 15s ease-in-out infinite; }
+  .blob:nth-child(3) { animation: float-slow 19s ease-in-out infinite reverse; }
+  .slide::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,0.55) 100%); }
+  .slide::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); background-size: 256px 256px; opacity: 0.025; mix-blend-mode: overlay; }
+  @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .radar-arm { transform-origin: 100px 100px; animation: radar-spin 3s linear infinite; }
+  .particle-canvas { position: absolute; inset: 0; z-index: 1; }
+  .bar-track { background: rgba(0,255,136,0.08); border-radius: 4px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #00ff88, #00ccff); width: 0; transition: width 0.7s ease; }
+  .mouse-spotlight { position: fixed; inset: 0; z-index: 99; pointer-events: none; display: none; }
+  .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 99px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; border: 1px solid rgba(0,255,136,0.2); color: #00ff88; background: rgba(0,255,136,0.06); }
+  .tag-blue { border-color: rgba(0,204,255,0.25); color: #00ccff; background: rgba(0,204,255,0.06); }
+  .tag-purple { border-color: rgba(124,58,237,0.35); color: #a78bfa; background: rgba(124,58,237,0.08); }
+  .phase-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 4px; font-size: 0.68rem; font-family: 'JetBrains Mono', monospace; background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.15); color: #00ff88; }
+</style>
+</head>
+<body>
+<div class="mouse-spotlight" id="spotlight"></div>
+<div class="deck">
+
+<!-- SLIDE 1: HERO -->
+<div class="slide slide-1 scanlines active" data-slide="1">
+  <div class="gradient-mesh">
+    <div class="blob" style="width:480px;height:480px;top:-120px;right:-80px;background:#00ff88;opacity:0.09"></div>
+    <div class="blob" style="width:280px;height:280px;bottom:-80px;left:-60px;background:#00ccff;opacity:0.07"></div>
+    <div class="blob" style="width:180px;height:180px;top:40%;left:12%;background:#7c3aed;opacity:0.08"></div>
+  </div>
+  <canvas class="particle-canvas"></canvas>
+  <div class="content" style="display:flex;align-items:center;justify-content:center;gap:clamp(2rem,6vw,6rem)">
+    <div style="flex-shrink:0;filter:drop-shadow(0 0 24px rgba(0,255,136,0.35));animation:notebook-float 3.5s ease-in-out infinite">
+      <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <style>@keyframes notebook-float{0%,100%{transform:translateY(0) rotate(-3deg) scale(1)}50%{transform:translateY(-22px) rotate(-3deg) scale(1.03)}}</style>
+        <circle cx="100" cy="100" r="90" stroke="#00ff88" stroke-width="1.2" opacity="0.12"/>
+        <circle cx="100" cy="100" r="65" stroke="#00ff88" stroke-width="1" opacity="0.18"/>
+        <circle cx="100" cy="100" r="40" stroke="#00ff88" stroke-width="1" opacity="0.28"/>
+        <circle cx="100" cy="100" r="15" stroke="#00ff88" stroke-width="1.5" opacity="0.5"/>
+        <line x1="100" y1="10" x2="100" y2="190" stroke="#00ff88" stroke-width="0.5" opacity="0.12"/>
+        <line x1="10" y1="100" x2="190" y2="100" stroke="#00ff88" stroke-width="0.5" opacity="0.12"/>
+        <g class="radar-arm">
+          <defs><linearGradient id="rg" x1="100" y1="100" x2="100" y2="12" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#00ff88" stop-opacity="0.9"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0"/></linearGradient></defs>
+          <line x1="100" y1="100" x2="100" y2="12" stroke="url(#rg)" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+        <circle cx="140" cy="55" r="5" fill="#00ff88"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/><animate attributeName="r" values="4;7;4" dur="2s" repeatCount="indefinite"/></circle>
+        <circle cx="58" cy="130" r="4" fill="#00ccff"><animate attributeName="opacity" values="0.8;0.1;0.8" dur="2.8s" repeatCount="indefinite"/></circle>
+        <circle cx="155" cy="118" r="3" fill="#a78bfa"><animate attributeName="opacity" values="0.7;0.2;0.7" dur="1.8s" repeatCount="indefinite"/></circle>
+        <circle cx="100" cy="100" r="4" fill="#00ff88" opacity="0.9"/>
+      </svg>
+    </div>
+    <div style="text-align:left">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:clamp(0.65rem,1.1vw,0.8rem);color:#00ff88;letter-spacing:0.15em;margin-bottom:0.8rem" class="reveal">// argus-osint-intelligence</div>
+      <h1 style="font-family:'JetBrains Mono',monospace;font-size:clamp(2.4rem,5.5vw,4.5rem);font-weight:700;line-height:1;background:linear-gradient(135deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.5rem" class="reveal glow-pulse">OSINT<br>Intelligence</h1>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:clamp(0.7rem,1.2vw,0.9rem);color:#00ccff;letter-spacing:0.08em;margin-bottom:1.4rem" class="reveal">Forensic OSINT · 15-Page PDF · Automated</div>
+      <!-- FIX: G[redacted], R[redacted] e O[redacted] removidos -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px" class="reveal">
+        <span class="tag">Python</span>
+        <span class="tag tag-purple">OSINT</span>
+        <span class="tag tag-blue">Docker</span>
+        <span class="tag tag-blue">Async Pipeline</span>
+      </div>
+      <div style="margin-top:1.4rem;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#6060a0" class="reveal">
+        <a href="https://github.com/Argus-Tech-Solutions/argus-osint-intelligence" target="_blank" style="color:#00ff88;text-decoration:none">github.com/Argus-Tech-Solutions</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: WHAT YOU GET -->
+<div class="slide slide-2 scanlines" data-slide="2">
+  <div class="gradient-mesh">
+    <div class="blob" style="width:360px;height:360px;top:-80px;right:-60px;background:#00ff88;opacity:0.07"></div>
+    <div class="blob" style="width:220px;height:220px;bottom:-60px;left:-40px;background:#7c3aed;opacity:0.06"></div>
+  </div>
+  <div class="content">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.5rem" class="reveal">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0">01 · SERVICE</span>
+      <span class="phase-badge">OSINT FORENSIC</span>
+    </div>
+    <h2 style="font-family:'JetBrains Mono',monospace;font-size:clamp(1.4rem,3vw,2.2rem);font-weight:700;color:#00ff88;margin-bottom:0.4rem" class="reveal">What You Get</h2>
+    <p style="color:#a0a0b8;font-size:0.9rem;max-width:70ch;margin-bottom:1.4rem;line-height:1.65" class="reveal">
+      A forensic OSINT investigation on any <strong style="color:#00ff88">person, company, or domain</strong>. Raw data collected from 10+ open sources, AI-enriched and analyzed, delivered as a <strong style="color:#00ccff">structured 15-page PDF report</strong> — no manual effort on your end.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.4rem" class="reveal">
+      <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.12);border-radius:8px;padding:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#00ff88;margin-bottom:6px">DATA COLLECTION</div>
+        <div style="font-size:0.82rem;color:#e8e8f0;font-weight:600">10+ Sources</div>
+        <div style="font-size:0.72rem;color:#6060a0;margin-top:4px">Shodan · WHOIS · DNS<br>Certs · GitHub · Social</div>
+      </div>
+      <!-- FIX: "Gemini 1.5 Pro" → "AI Enrichment" -->
+      <div style="background:rgba(0,204,255,0.05);border:1px solid rgba(0,204,255,0.12);border-radius:8px;padding:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#00ccff;margin-bottom:6px">AI ENRICHMENT</div>
+        <div style="font-size:0.82rem;color:#e8e8f0;font-weight:600">AI Analysis</div>
+        <div style="font-size:0.72rem;color:#6060a0;margin-top:4px">Pattern analysis<br>Risk scoring · Summary</div>
+      </div>
+      <div style="background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.18);border-radius:8px;padding:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#a78bfa;margin-bottom:6px">DELIVERY</div>
+        <div style="font-size:0.82rem;color:#e8e8f0;font-weight:600">15-Page PDF</div>
+        <div style="font-size:0.72rem;color:#6060a0;margin-top:4px">Executive summary<br>Evidence · Timeline</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px" class="reveal">
+      <div style="text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:#00ff88" class="stat-glow" data-count="15">0</div><div style="font-size:0.68rem;color:#6060a0;margin-top:2px">PDF PAGES</div></div>
+      <div style="text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:#00ccff" data-count="10">0</div><div style="font-size:0.68rem;color:#6060a0;margin-top:2px">DATA SOURCES</div></div>
+      <div style="text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:#a78bfa">AI</div><div style="font-size:0.68rem;color:#6060a0;margin-top:2px">ENRICHED</div></div>
+      <div style="text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:#00ff88" data-count="24" data-suffix="h">0</div><div style="font-size:0.68rem;color:#6060a0;margin-top:2px">DELIVERY</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: PIPELINE -->
+<div class="slide slide-3 scanlines" data-slide="3">
+  <div class="gradient-mesh">
+    <div class="blob" style="width:300px;height:300px;top:-60px;left:-60px;background:#00ff88;opacity:0.06"></div>
+    <div class="blob" style="width:200px;height:200px;bottom:-40px;right:-40px;background:#00ccff;opacity:0.06"></div>
+  </div>
+  <div class="content">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0;margin-bottom:0.4rem" class="reveal">argus-osint-intelligence · PIPELINE</div>
+    <h2 style="font-family:'JetBrains Mono',monospace;font-size:clamp(1.2rem,2.5vw,1.8rem);font-weight:700;color:#00ff88;margin-bottom:1.2rem" class="reveal">Automated Recon Pipeline</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="reveal">
+      <div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.10);border-radius:8px;padding:16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#00ff88;margin-bottom:10px;letter-spacing:0.1em">PIPELINE STAGES</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#00ff88;width:58px">Stage 1</span><div class="bar-track" style="flex:1"><div class="bar-fill" data-width="100"></div></div><span style="font-size:0.68rem;color:#6060a0;width:95px">DNS · WHOIS</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#00ff88;width:58px">Stage 2</span><div class="bar-track" style="flex:1"><div class="bar-fill" data-width="100"></div></div><span style="font-size:0.68rem;color:#6060a0;width:95px">Shodan · Certs</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#00ccff;width:58px">Stage 3</span><div class="bar-track" style="flex:1"><div class="bar-fill" data-width="100"></div></div><span style="font-size:0.68rem;color:#6060a0;width:95px">Social · GitHub</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#a78bfa;width:58px">Stage 4</span><div class="bar-track" style="flex:1"><div class="bar-fill" data-width="100"></div></div><span style="font-size:0.68rem;color:#6060a0;width:95px">AI Analysis</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#00ff88;width:58px">Stage 5</span><div class="bar-track" style="flex:1"><div class="bar-fill" data-width="100"></div></div><span style="font-size:0.68rem;color:#6060a0;width:95px">PDF Export</span></div>
+        </div>
+      </div>
+      <div style="background:rgba(0,204,255,0.04);border:1px solid rgba(0,204,255,0.10);border-radius:8px;padding:16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#00ccff;margin-bottom:10px;letter-spacing:0.1em">REPORT SECTIONS</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:0.8rem">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#a0a0b8">Executive Summary</span><span style="font-family:'JetBrains Mono',monospace;color:#00ff88;font-weight:600">p.1–2</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#a0a0b8">Infrastructure Map</span><span style="font-family:'JetBrains Mono',monospace;color:#00ccff;font-weight:600">p.3–5</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#a0a0b8">Identity &amp; Social</span><span style="font-family:'JetBrains Mono',monospace;color:#a78bfa;font-weight:600">p.6–8</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#a0a0b8">Risk Assessment</span><span style="font-family:'JetBrains Mono',monospace;color:#00ff88;font-weight:600">p.9–11</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#a0a0b8">Evidence &amp; Timeline</span><span style="font-family:'JetBrains Mono',monospace;color:#00ccff;font-weight:600">p.12–15</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- FIX: "G[redacted]" → "AI Engine" | "W[redacted]" → "PDF Engine" -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px" class="reveal">
+      <div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.1);border-radius:6px;padding:10px;text-align:center"><div style="font-size:0.68rem;color:#00ff88;font-family:'JetBrains Mono',monospace">Subfinder</div><div style="font-size:0.7rem;color:#6060a0;margin-top:3px">Subdomain</div></div>
+      <div style="background:rgba(0,204,255,0.04);border:1px solid rgba(0,204,255,0.1);border-radius:6px;padding:10px;text-align:center"><div style="font-size:0.68rem;color:#00ccff;font-family:'JetBrains Mono',monospace">Shodan API</div><div style="font-size:0.7rem;color:#6060a0;margin-top:3px">Infrastructure</div></div>
+      <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.14);border-radius:6px;padding:10px;text-align:center"><div style="font-size:0.68rem;color:#a78bfa;font-family:'JetBrains Mono',monospace">AI Engine</div><div style="font-size:0.7rem;color:#6060a0;margin-top:3px">Enrichment</div></div>
+      <div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.1);border-radius:6px;padding:10px;text-align:center"><div style="font-size:0.68rem;color:#00ff88;font-family:'JetBrains Mono',monospace">PDF Engine</div><div style="font-size:0.7rem;color:#6060a0;margin-top:3px">Report</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: PRICING -->
+<div class="slide slide-4 scanlines" data-slide="4">
+  <div class="gradient-mesh">
+    <div class="blob" style="width:400px;height:400px;top:-100px;left:-80px;background:#00ccff;opacity:0.07"></div>
+    <div class="blob" style="width:250px;height:250px;bottom:-70px;right:-50px;background:#7c3aed;opacity:0.06"></div>
+  </div>
+  <div class="content">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0;margin-bottom:0.4rem" class="reveal">argus-osint-intelligence · PRICING</div>
+    <h2 style="font-family:'JetBrains Mono',monospace;font-size:clamp(1.4rem,3vw,2.2rem);font-weight:700;color:#00ff88;margin-bottom:1.4rem" class="reveal">Service Packages</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" class="reveal">
+      <!-- BASIC -->
+      <div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.14);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#6060a0;letter-spacing:0.1em">BASIC</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:2.2rem;font-weight:700;color:#00ff88">$75</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;background:rgba(0,255,136,0.1);color:#00ff88;padding:2px 8px;border-radius:4px">⚡ 24h delivery</span></div>
+        <div style="font-size:0.8rem;color:#a0a0b8;line-height:1.6">Domain or person recon<br>5-page PDF report<br>5 data sources</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto">
+          <span class="tag" style="font-size:0.65rem">DNS</span>
+          <span class="tag" style="font-size:0.65rem">WHOIS</span>
+          <span class="tag" style="font-size:0.65rem">Shodan</span>
+        </div>
+      </div>
+      <!-- STANDARD -->
+      <div style="background:rgba(0,204,255,0.06);border:2px solid rgba(0,204,255,0.35);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:10px;position:relative">
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#00ccff;color:#0a0a0f;font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap">MOST POPULAR</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#00ccff;letter-spacing:0.1em">STANDARD</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:2.2rem;font-weight:700;color:#00ccff">$180</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;background:rgba(0,204,255,0.1);color:#00ccff;padding:2px 8px;border-radius:4px">⚡ 24h delivery</span></div>
+        <div style="font-size:0.8rem;color:#a0a0b8;line-height:1.6">Full forensic OSINT<br>15-page PDF report<br>10+ sources · AI enriched</div>
+        <!-- FIX: "G[redacted]" tag removido do card Standard -->
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto">
+          <span class="tag tag-blue" style="font-size:0.65rem">Full Pipeline</span>
+          <span class="tag tag-blue" style="font-size:0.65rem">AI Enriched</span>
+        </div>
+      </div>
+      <!-- PREMIUM -->
+      <div style="background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.28);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#a78bfa;letter-spacing:0.1em">PREMIUM</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:2.2rem;font-weight:700;color:#a78bfa">$380</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;background:rgba(124,58,237,0.12);color:#a78bfa;padding:2px 8px;border-radius:4px">⚡ 48h delivery</span></div>
+        <div style="font-size:0.8rem;color:#a0a0b8;line-height:1.6">15-page PDF + dashboard<br>Competitor analysis<br>30-day monitoring</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto">
+          <span class="tag tag-purple" style="font-size:0.65rem">Dashboard</span>
+          <span class="tag tag-purple" style="font-size:0.65rem">Monitoring</span>
+        </div>
+      </div>
+    </div>
+    <!-- FIX: G[redacted], R[redacted] e W[redacted] removidos das tags de rodapé -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:1.4rem;align-items:center" class="reveal">
+      <span class="tag">Python</span>
+      <span class="tag tag-purple">Shodan API</span>
+      <span class="tag">Subfinder</span>
+      <span class="tag tag-blue">Async Pipeline</span>
+      <span class="tag tag-blue">Docker</span>
+      <a href="https://github.com/Argus-Tech-Solutions/argus-osint-intelligence" target="_blank" style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#00ff88;text-decoration:none;border:1px solid rgba(0,255,136,0.25);padding:4px 14px;border-radius:4px">github →</a>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: CTA -->
+<div class="slide slide-5 scanlines" data-slide="5">
+  <div class="gradient-mesh">
+    <div class="blob" style="width:500px;height:500px;top:-120px;right:-100px;background:#00ff88;opacity:0.09"></div>
+    <div class="blob" style="width:300px;height:300px;bottom:-80px;left:-60px;background:#00ccff;opacity:0.07"></div>
+    <div class="blob" style="width:200px;height:200px;top:35%;left:10%;background:#7c3aed;opacity:0.07"></div>
+  </div>
+  <canvas class="particle-canvas"></canvas>
+  <div class="content" style="text-align:center">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:#6060a0;margin-bottom:0.8rem" class="reveal">// intelligence gathered</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:1.4rem;padding:10px 20px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.1);border-radius:8px;max-width:420px;margin-left:auto;margin-right:auto;">
+        <span style="font-size:1rem">🔒</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0;line-height:1.5">
+          <strong style="color:#00ff88">No prompt sharing.</strong> Your data stays yours.<br>
+          <span style="opacity:0.6">All outputs are yours to own, deploy and modify.</span>
+        </span>
+      </div>
+    <h2 style="font-family:'JetBrains Mono',monospace;font-size:clamp(2rem,5vw,3.8rem);font-weight:700;background:linear-gradient(135deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.6rem" class="reveal glow-pulse">Know your<br>target.</h2>
+    <p style="color:#a0a0b8;font-size:0.9rem;margin-bottom:2rem;max-width:50ch;margin-left:auto;margin-right:auto" class="reveal">Forensic OSINT · 15-page PDF report.<br>Delivered in 24h. Powered by Argus.</p>
+    <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap" class="reveal">
+      <a href="https://www.fiverr.com" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:11px 26px;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.35);border-radius:6px;color:#00ff88;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600">Order on Fiverr →</a>
+      <a href="https://github.com/Argus-Tech-Solutions" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:11px 26px;background:rgba(0,204,255,0.08);border:1px solid rgba(0,204,255,0.25);border-radius:6px;color:#00ccff;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.85rem">Argus-Tech-Solutions</a>
+      <a href="https://github.com/marcosantcs" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:11px 26px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);border-radius:6px;color:#a78bfa;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.85rem">github.com/marcosantcs</a>
+    </div>
+    <div style="margin-top:2.5rem;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#6060a0" class="reveal">argus-osint-intelligence · Argus Intelligence · marcosantcs</div>
+  </div>
+</div>
+
+</div>
+<!-- NAV -->
+
+    <div style="margin:0 auto 0.4rem;text-align:center">
+      <a href="https://github.com/Argus-Tech-Solutions/argus-osint-intelligence#demo" target="_blank"
+         style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;
+         color:#00ff88;text-decoration:none;border-bottom:1px solid rgba(0,255,136,0.2);
+         padding-bottom:1px">
+         ⬡ Sample outputs &amp; live demo → github.com/Argus-Tech-Solutions/argus-osint-intelligence
+      </a>
+    </div>
+<div class="nav-controls">
+  <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+  <div class="slide-dots" id="dots"></div>
+  <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+  <span class="slide-counter" id="counter">1 / 5</span>
+</div>
+<script>
+let current=1;
+const total=document.querySelectorAll('.slide').length;
+const dotsContainer=document.getElementById('dots');
+const counter=document.getElementById('counter');
+for(let i=1;i<=total;i++){const d=document.createElement('div');d.className='dot'+(i===1?' active':'');d.onclick=()=>goToSlide(i);dotsContainer.appendChild(d);}
+function goToSlide(n){const prev=document.querySelector('.slide.active');const next=document.querySelector(`.slide[data-slide="${n}"]`);if(prev)prev.classList.remove('active');if(next){next.classList.add('active');animateSlide(next);}current=n;updateNav();}
+function changeSlide(dir){let n=current+dir;if(n<1)n=total;if(n>total)n=1;goToSlide(n);}
+function updateNav(){document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i+1===current));counter.textContent=current+' / '+total;}
+function animateSlide(slide){slide.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transition='none';el.style.opacity=0;el.style.transform='translateY(18px)';el.offsetHeight;const delay=i*0.07;el.style.transition=`opacity 0.32s ease ${delay}s, transform 0.32s ease ${delay}s`;el.style.opacity=1;el.style.transform='translateY(0)';});animateEffects(slide);}
+function animateEffects(slide){slide.querySelectorAll('[data-count]:not(.counted)').forEach(el=>{el.classList.add('counted');const target=parseInt(el.dataset.count);const suffix=el.dataset.suffix||'';let cur=0;const step=target/40;const t=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(t);}el.textContent=Math.round(cur).toLocaleString()+suffix;},28);});slide.querySelectorAll('.bar-fill:not(.fill-init)').forEach((bar,i)=>{bar.classList.add('fill-init');bar.style.width='0';bar.style.transition=`width 0.55s ease ${i*0.1}s`;bar.offsetHeight;bar.style.width=bar.dataset.width+'%';});}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();changeSlide(1);}if(e.key==='ArrowLeft'){e.preventDefault();changeSlide(-1);}});
+let tsX=0;document.addEventListener('touchstart',e=>tsX=e.touches[0].clientX);document.addEventListener('touchend',e=>{const d=tsX-e.changedTouches[0].clientX;if(Math.abs(d)>50)changeSlide(d>0?1:-1);});
+function animateSlideInit(slide){slide.querySelectorAll('.reveal').forEach(el=>{el.style.opacity=1;el.style.transform='translateY(0)';});animateEffects(slide);}
+document.addEventListener('mousemove',e=>{const s=document.getElementById('spotlight');s.style.display='block';s.style.background=`radial-gradient(600px circle at ${e.clientX}px ${e.clientY}px, rgba(0,255,136,0.055), transparent 40%)`;});
+function initParticles(canvas,opts){if(!canvas)return;const ctx=canvas.getContext('2d');canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;const count=opts.count||50;let mx=-1000,my=-1000;const particles=Array.from({length:count},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:Math.random()*0.6-0.3,vy:Math.random()*0.6-0.3,size:Math.random()*2+0.6,alpha:Math.random()*0.3+0.08}));if(opts.interactive){canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;});canvas.addEventListener('mouseleave',()=>{mx=-1000;my=-1000;});}function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{if(opts.interactive){const dx=p.x-mx,dy=p.y-my,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){const f=(100-dist)/100*1.8;p.vx+=dx/dist*f*0.08;p.vy+=dy/dist*f*0.08;}}p.vx*=0.98;p.vy*=0.98;p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=`rgba(0,255,136,${p.alpha})`;ctx.fill();});requestAnimationFrame(animate);}animate();}
+document.querySelectorAll('.particle-canvas').forEach(c=>initParticles(c,{interactive:true,count:55}));
+try{animateSlideInit(document.querySelector('.slide.active'));}catch(e){}
+</script>
+</body>
+</html>

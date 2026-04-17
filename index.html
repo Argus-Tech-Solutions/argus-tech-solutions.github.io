@@ -1,34 +1,428 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Argus Intelligence</title>
+<title>Argus Intelligence — AI · Security · Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
-h1{font-size:2.5rem;color:#00ff88;margin-bottom:.5rem}
-p.sub{color:#8b949e;margin-bottom:2.5rem;font-size:1.1rem}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;width:100%;max-width:900px}
-.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem}
-.card h3{color:#00ff88;margin-bottom:.5rem}
-.card p{color:#8b949e;font-size:.9rem;margin-bottom:1rem}
-.card .price{color:#e6edf3;font-weight:bold}
-a{color:#00ff88;text-decoration:none}
-footer{margin-top:3rem;color:#8b949e;font-size:.85rem}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#e8e8f0;overflow-x:hidden}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.85);backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,255,136,0.07);padding:0 clamp(1.5rem,4vw,4rem);height:58px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;background:linear-gradient(135deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.05em}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0;text-decoration:none;transition:color 0.2s}
+.nav-links a:hover{color:#00ff88}
+.nav-cta{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#00ff88;border:1px solid rgba(0,255,136,0.3);padding:5px 14px;border-radius:4px;text-decoration:none;transition:background 0.2s}
+.nav-cta:hover{background:rgba(0,255,136,0.08)}
+
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:clamp(2rem,6vw,5rem);padding-top:80px;position:relative;overflow:hidden}
+canvas#particles{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:780px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#00ff88;border:1px solid rgba(0,255,136,0.2);background:rgba(0,255,136,0.04);padding:4px 14px;border-radius:99px;margin-bottom:1.6rem;letter-spacing:0.12em}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:#00ff88;animation:pulse-dot 1.8s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.hero h1{font-family:'JetBrains Mono',monospace;font-size:clamp(2.8rem,7vw,5.5rem);font-weight:700;line-height:1.08;margin-bottom:1.2rem}
+.h1-argus{background:linear-gradient(135deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.h1-intel{color:#e8e8f0;opacity:0.85}
+@keyframes glow-hero{0%,100%{text-shadow:0 0 30px rgba(0,255,136,0.4),0 0 60px rgba(0,255,136,0.15)}50%{text-shadow:0 0 50px rgba(0,255,136,0.7),0 0 100px rgba(0,255,136,0.3)}}
+.h1-argus{animation:glow-hero 3s ease-in-out infinite}
+.hero-sub{font-size:clamp(0.85rem,1.8vw,1.05rem);color:#a0a0b8;max-width:54ch;margin:0 auto 2.4rem;line-height:1.7}
+.hero-sub strong{color:#00ccff}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:3.5rem}
+.btn-primary{font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;color:#0a0a0f;background:#00ff88;border:none;padding:11px 28px;border-radius:6px;text-decoration:none;transition:opacity 0.2s,transform 0.2s}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-ghost{font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:#00ccff;border:1px solid rgba(0,204,255,0.3);background:rgba(0,204,255,0.05);padding:11px 28px;border-radius:6px;text-decoration:none;transition:background 0.2s}
+.btn-ghost:hover{background:rgba(0,204,255,0.1)}
+.stats-row{display:flex;justify-content:center;gap:clamp(24px,5vw,56px);flex-wrap:wrap}
+.stat{text-align:center}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:#00ff88}
+.stat-label{font-size:0.7rem;color:#6060a0;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;margin-top:3px}
+
+.blob-wrap{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(90px)}
+@keyframes float-a{0%{transform:translate(0,0)}50%{transform:translate(70px,-60px)}100%{transform:translate(0,0)}}
+@keyframes float-b{0%{transform:translate(0,0)}50%{transform:translate(-50px,50px)}100%{transform:translate(0,0)}}
+.blob-a{animation:float-a 14s ease-in-out infinite}
+.blob-b{animation:float-b 18s ease-in-out infinite}
+
+.section-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,136,0.12),transparent);margin:0 clamp(2rem,6vw,6rem)}
+
+.services{padding:clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,5rem)}
+.section-header{text-align:center;margin-bottom:3.5rem}
+.section-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0;letter-spacing:0.18em;margin-bottom:0.8rem}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:700;color:#e8e8f0}
+.section-title span{background:linear-gradient(135deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.gigs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:18px;max-width:1200px;margin:0 auto}
+
+.gig-card{background:#0e0e1a;border-radius:12px;padding:24px;border:1px solid rgba(255,255,255,0.05);position:relative;overflow:hidden;transition:transform 0.25s,border-color 0.25s;cursor:default;display:flex;flex-direction:column}
+.gig-card:hover{transform:translateY(-3px)}
+.gig-card-accent{position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0}
+.gig-num{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#404060;letter-spacing:0.1em;margin-bottom:12px}
+.gig-name{font-family:'JetBrains Mono',monospace;font-size:1.25rem;font-weight:700;margin-bottom:5px;line-height:1.2}
+.gig-subtitle{font-size:0.78rem;color:#6060a0;margin-bottom:14px;line-height:1.5;font-family:'JetBrains Mono',monospace}
+.gig-desc{font-size:0.82rem;color:#a0a0b8;line-height:1.6;margin-bottom:16px}
+.gig-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.tag{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:0.64rem;font-family:'JetBrains Mono',monospace;border:1px solid;white-space:nowrap}
+.gig-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05)}
+.gig-price{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0}
+.gig-price strong{font-size:1.1rem;font-weight:700}
+.gig-cta{font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:5px 14px;border-radius:4px;border:1px solid;text-decoration:none;transition:background 0.2s;white-space:nowrap}
+
+.tech-strip{padding:clamp(2rem,5vw,4rem) clamp(1.5rem,5vw,5rem);text-align:center;background:rgba(0,255,136,0.018);border-top:1px solid rgba(0,255,136,0.06);border-bottom:1px solid rgba(0,255,136,0.06)}
+.tech-strip-label{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#404060;letter-spacing:0.18em;margin-bottom:1.4rem}
+.tech-list{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 16px}
+.tech-item{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0;padding:4px 12px;border:1px solid rgba(255,255,255,0.05);border-radius:4px;background:rgba(255,255,255,0.02)}
+
+.how{padding:clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,5rem)}
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;max-width:960px;margin:0 auto}
+.step{padding:20px;background:#0e0e1a;border:1px solid rgba(255,255,255,0.05);border-radius:10px;text-align:center}
+.step-num{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#404060;margin-bottom:6px}
+.step-title{font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;color:#e8e8f0;margin-bottom:6px}
+.step-desc{font-size:0.78rem;color:#6060a0;line-height:1.5}
+
+.cta-banner{margin:0 clamp(1.5rem,5vw,5rem) clamp(3rem,6vw,5rem);padding:clamp(2.5rem,5vw,4rem);background:linear-gradient(135deg,rgba(0,255,136,0.05),rgba(0,204,255,0.04));border:1px solid rgba(0,255,136,0.12);border-radius:16px;text-align:center;position:relative;overflow:hidden}
+.cta-banner h2{font-family:'JetBrains Mono',monospace;font-size:clamp(1.4rem,3vw,2.2rem);font-weight:700;background:linear-gradient(135deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.8rem}
+.cta-banner p{color:#a0a0b8;font-size:0.9rem;margin-bottom:1.8rem;max-width:50ch;margin-left:auto;margin-right:auto}
+
+footer{padding:clamp(2rem,4vw,3rem) clamp(1.5rem,5vw,5rem);border-top:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-brand{font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;background:linear-gradient(135deg,#00ff88,#00ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-links a{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#6060a0;text-decoration:none;transition:color 0.2s}
+.footer-links a:hover{color:#00ff88}
+.footer-copy{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#404060;width:100%;margin-top:8px}
+
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:256px 256px;opacity:0.018;mix-blend-mode:overlay}
+
+.sr{opacity:0;transform:translateY(20px);transition:opacity 0.55s ease,transform 0.55s ease}
+.sr.visible{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
-<h1>Argus Intelligence</h1>
-<p class="sub">Production-grade AI, Security &amp; Data services &mdash; delivered in 24&ndash;48h</p>
-<div class="grid">
-<div class="card"><h3>Cybersecurity</h3><p>10k-connection stress test + CVSS 3.1 vulnerability report</p><span class="price">From $60 - 24h</span></div>
-<div class="card"><h3>OSINT Intelligence</h3><p>Automated forensic OSINT on any person, company or domain</p><span class="price">From $75 - 24h</span></div>
-<div class="card"><h3>AI Engineering</h3><p>Fine-tune Llama 3 8B + Vertex AI deployment + FastAPI</p><span class="price">From $180 - 48h</span></div>
-<div class="card"><h3>Ethereum Node</h3><p>Production node via Ansible IaC + Prometheus monitoring</p><span class="price">From $80 - 24h</span></div>
-<div class="card"><h3>Data Engineering</h3><p>BigQuery dashboard + dbt + Airflow ETL + AI insights</p><span class="price">From $90 - 24h</span></div>
-<div class="card"><h3>AI Visual</h3><p>AI-generated images 4K/8K · Kling AI video · Commercial license</p><span class="price">From $120 - 48h</span></div>
+
+<nav>
+  <span class="nav-logo">ARGUS</span>
+  <div class="nav-links">
+    <a href="#services">Services</a>
+    <a href="#how">How it works</a>
+    <a href="https://github.com/Argus-Tech-Solutions" target="_blank">GitHub</a>
+    <a href="https://www.fiverr.com" target="_blank" class="nav-cta">Order on Fiverr &#8594;</a>
+  </div>
+</nav>
+
+<section class="hero" id="home">
+  <div class="blob-wrap">
+    <div class="blob blob-a" style="width:600px;height:600px;top:-150px;right:-120px;background:#00ff88;opacity:0.055"></div>
+    <div class="blob blob-b" style="width:400px;height:400px;bottom:-100px;left:-80px;background:#00ccff;opacity:0.05"></div>
+    <div class="blob blob-a" style="width:250px;height:250px;top:40%;left:10%;background:#7c3aed;opacity:0.06;animation-duration:20s"></div>
+  </div>
+  <canvas id="particles"></canvas>
+  <div class="hero-content">
+    <div class="hero-badge sr"><span class="hero-badge-dot"></span>ARGUS INTELLIGENCE &middot; 7 ACTIVE SERVICES</div>
+    <h1 class="sr">
+      <span class="h1-argus">Argus</span><br>
+      <span class="h1-intel">Intelligence</span>
+    </h1>
+    <p class="hero-sub sr">
+      Cybersecurity &middot; OSINT &middot; AI Engineering &middot; Data Engineering &middot; Executive ATS &middot; Web3 &middot; AI Visual.<br>
+      <strong>Production-grade freelance services.</strong> Delivered in 24&ndash;48h.
+    </p>
+    <div class="hero-btns sr">
+      <a href="#services" class="btn-primary">Explore Services</a>
+      <a href="https://github.com/Argus-Tech-Solutions" target="_blank" class="btn-ghost">GitHub &#8594;</a>
+    </div>
+    <div class="stats-row sr">
+      <div class="stat"><div class="stat-num" data-count="7">0</div><div class="stat-label">SERVICES</div></div>
+      <div class="stat"><div class="stat-num" data-count="24" data-suffix="h">0</div><div class="stat-label">AVG DELIVERY</div></div>
+      <div class="stat"><div class="stat-num" data-count="18" data-suffix="+">0</div><div class="stat-label">TECH STACK</div></div>
+      <div class="stat"><div class="stat-num" data-count="100" data-suffix="%">0</div><div class="stat-label">PRODUCTION</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<section class="services" id="services">
+  <div class="section-header sr">
+    <div class="section-label">// SERVICES</div>
+    <h2 class="section-title">7 Production-Ready <span>Gigs</span></h2>
+  </div>
+  <div class="gigs-grid">
+
+    <!-- 01 CYBERSECURITY -->
+    <div class="gig-card sr" style="border-color:rgba(0,255,136,0.14)">
+      <div class="gig-card-accent" style="background:linear-gradient(90deg,#00ff88,#00ccff)"></div>
+      <div class="gig-num">01 &middot; SECURITY</div>
+      <div class="gig-name" style="color:#00ff88">Cybersecurity</div>
+      <div class="gig-subtitle">Stress Test &middot; CVSS 3.1 &middot; OWASP</div>
+      <p class="gig-desc">10k-connection load test + full OWASP Top 10 vulnerability scan scored with CVSS 3.1. Delivered as HTML + PDF report with remediation roadmap.</p>
+      <div class="gig-tags">
+        <span class="tag" style="border-color:rgba(0,255,136,0.25);color:#00ff88;background:rgba(0,255,136,0.06)">Python</span>
+        <span class="tag" style="border-color:rgba(0,204,255,0.2);color:#00ccff;background:rgba(0,204,255,0.06)">Locust</span>
+        <span class="tag" style="border-color:rgba(255,107,107,0.3);color:#ff6b6b;background:rgba(255,107,107,0.06)">CVSS 3.1</span>
+        <span class="tag" style="border-color:rgba(124,58,237,0.3);color:#a78bfa;background:rgba(124,58,237,0.07)">OWASP</span>
+      </div>
+      <div class="gig-footer">
+        <div class="gig-price">from <strong style="color:#00ff88">$60</strong></div>
+        <a href="https://www.fiverr.com" target="_blank" class="gig-cta" style="border-color:rgba(0,255,136,0.3);color:#00ff88;background:rgba(0,255,136,0.04)">View Gig &#8594;</a>
+      </div>
+    </div>
+
+    <!-- 02 OSINT -->
+    <div class="gig-card sr" style="border-color:rgba(0,255,136,0.14)">
+      <div class="gig-card-accent" style="background:linear-gradient(90deg,#00ff88,#7c3aed)"></div>
+      <div class="gig-num">02 &middot; INTELLIGENCE</div>
+      <div class="gig-name" style="color:#00ff88">OSINT Intelligence</div>
+      <div class="gig-subtitle">Forensic Recon &middot; 15-Page PDF &middot; AI</div>
+      <p class="gig-desc">Automated forensic OSINT on any person, company, or domain. 10 open sources, AI enrichment, delivered as a structured 15-page PDF report.</p>
+      <div class="gig-tags">
+        <span class="tag" style="border-color:rgba(0,255,136,0.25);color:#00ff88;background:rgba(0,255,136,0.06)">Python</span>
+        <span class="tag" style="border-color:rgba(0,204,255,0.2);color:#00ccff;background:rgba(0,204,255,0.06)">AI Enriched</span>
+        <span class="tag" style="border-color:rgba(124,58,237,0.3);color:#a78bfa;background:rgba(124,58,237,0.07)">Shodan</span>
+        <span class="tag" style="border-color:rgba(0,255,136,0.25);color:#00ff88;background:rgba(0,255,136,0.06)">Async Pipeline</span>
+      </div>
+      <div class="gig-footer">
+        <div class="gig-price">from <strong style="color:#00ff88">$75</strong></div>
+        <a href="https://www.fiverr.com" target="_blank" class="gig-cta" style="border-color:rgba(0,255,136,0.3);color:#00ff88;background:rgba(0,255,136,0.04)">View Gig &#8594;</a>
+      </div>
+    </div>
+
+    <!-- 03 AI ENGINEERING -->
+    <div class="gig-card sr" style="border-color:rgba(124,58,237,0.2)">
+      <div class="gig-card-accent" style="background:linear-gradient(90deg,#7c3aed,#a78bfa,#00ccff)"></div>
+      <div class="gig-num">03 &middot; AI</div>
+      <div class="gig-name" style="color:#a78bfa">AI Engineering</div>
+      <div class="gig-subtitle">LLM Fine-tuning &middot; Vertex AI &middot; FastAPI</div>
+      <p class="gig-desc">Fine-tune Llama 3 8B on your domain data, deploy on Google Vertex AI, wrap with a production FastAPI endpoint. Your AI, your rules.</p>
+      <div class="gig-tags">
+        <span class="tag" style="border-color:rgba(124,58,237,0.3);color:#a78bfa;background:rgba(124,58,237,0.07)">Llama 3 8B</span>
+        <span class="tag" style="border-color:rgba(0,204,255,0.2);color:#00ccff;background:rgba(0,204,255,0.06)">Vertex AI</span>
+        <span class="tag" style="border-color:rgba(124,58,237,0.3);color:#a78bfa;background:rgba(124,58,237,0.07)">LoRA</span>
+        <span class="tag" style="border-color:rgba(0,204,255,0.2);color:#00ccff;background:rgba(0,204,255,0.06)">FastAPI</span>
+      </div>
+      <div class="gig-footer">
+        <div class="gig-price">from <strong style="color:#a78bfa">$180</strong></div>
+        <a href="https://www.fiverr.com" target="_blank" class="gig-cta" style="border-color:rgba(124,58,237,0.35);color:#a78bfa;background:rgba(124,58,237,0.05)">View Gig &#8594;</a>
+      </div>
+    </div>
+
+    <!-- 04 DATA ENGINEERING -->
+    <div class="gig-card sr" style="border-color:rgba(0,204,255,0.16)">
+      <div class="gig-card-accent" style="background:linear-gradient(90deg,#00ccff,#00ff88)"></div>
+      <div class="gig-num">04 &middot; DATA</div>
+      <div class="gig-name" style="color:#00ccff">Data Engineering</div>
+      <div class="gig-subtitle">BigQuery &middot; Advanced SQL &middot; AI Insights</div>
+      <p class="gig-desc">Production HTML dashboard connected to BigQuery with advanced SQL, AI-generated insights via AI engine, and full ETL pipeline using dbt + Airflow.</p>
+      <div class="gig-tags">
+        <span class="tag" style="border-color:rgba(0,204,255,0.2);color:#00ccff;background:rgba(0,204,255,0.06)">BigQuery</span>
+        <span class="tag" style="border-color:rgba(0,255,136,0.25);color:#00ff88;background:rgba(0,255,136,0.06)">dbt</span>
+        <span class="tag" style="border-color:rgba(124,58,237,0.3);color:#a78bfa;background:rgba(124,58,237,0.07)">AI Insights</span>
+        <span class="tag" style="border-color:rgba(255,165,0,0.3);color:#ffaa44;background:rgba(255,165,0,0.06)">Airflow</span>
+      </div>
+      <div class="gig-footer">
+        <div class="gig-price">from <strong style="color:#00ccff">$90</strong></div>
+        <a href="https://www.fiverr.com" target="_blank" class="gig-cta" style="border-color:rgba(0,204,255,0.3);color:#00ccff;background:rgba(0,204,255,0.05)">View Gig &#8594;</a>
+      </div>
+    </div>
+
+    <!-- 05 EXECUTIVE ATS -->
+    <div class="gig-card sr" style="border-color:rgba(251,191,36,0.18)">
+      <div class="gig-card-accent" style="background:linear-gradient(90deg,#fbbf24,#f97316)"></div>
+      <div class="gig-num">05 &middot; CAREER</div>
+      <div class="gig-name" style="color:#fbbf24">Executive ATS</div>
+      <div class="gig-subtitle">ATS Optimization &middot; AI Resume &middot; Score 90+</div>
+      <p class="gig-desc">Transform any resume into an ATS-beating executive document. AI-powered keyword optimization, clean format, guaranteed 90+ score on all major parsers.</p>
+      <div class="gig-tags">
+        <span class="tag" style="border-color:rgba(251,191,36,0.3);color:#fbbf24;background:rgba(251,191,36,0.06)">AI Powered</span>
+        <span class="tag" style="border-color:rgba(251,191,36,0.3);color:#fbbf24;background:rgba(251,191,36,0.06)">Python</span>
+        <span class="tag" style="border-color:rgba(249,115,22,0.3);color:#f97316;background:rgba(249,115,22,0.06)">PDF</span>
+        <span class="tag" style="border-color:rgba(0,255,136,0.25);color:#00ff88;background:rgba(0,255,136,0.06)">NLP</span>
+      </div>
+      <div class="gig-footer">
+        <div class="gig-price">from <strong style="color:#fbbf24">$45</strong></div>
+        <a href="https://www.fiverr.com" target="_blank" class="gig-cta" style="border-color:rgba(251,191,36,0.3);color:#fbbf24;background:rgba(251,191,36,0.04)">View Gig &#8594;</a>
+      </div>
+    </div>
+
+    <!-- 06 ETHEREUM / WEB3 -->
+    <div class="gig-card sr" style="border-color:rgba(98,126,234,0.2)">
+      <div class="gig-card-accent" style="background:linear-gradient(90deg,#627eea,#9945ff)"></div>
+      <div class="gig-num">06 &middot; WEB3</div>
+      <div class="gig-name" style="color:#627eea">Ethereum Node</div>
+      <div class="gig-subtitle">Full Node &middot; Smart Contracts &middot; Web3.py</div>
+      <p class="gig-desc">Deploy a production Ethereum node, write and audit Solidity smart contracts, and integrate Web3 APIs. From testnet to mainnet in 24h.</p>
+      <div class="gig-tags">
+        <span class="tag" style="border-color:rgba(98,126,234,0.3);color:#627eea;background:rgba(98,126,234,0.07)">Solidity</span>
+        <span class="tag" style="border-color:rgba(98,126,234,0.3);color:#627eea;background:rgba(98,126,234,0.07)">Web3.py</span>
+        <span class="tag" style="border-color:rgba(0,204,255,0.2);color:#00ccff;background:rgba(0,204,255,0.06)">Docker</span>
+        <span class="tag" style="border-color:rgba(0,255,136,0.25);color:#00ff88;background:rgba(0,255,136,0.06)">Python</span>
+      </div>
+      <div class="gig-footer">
+        <div class="gig-price">from <strong style="color:#627eea">$120</strong></div>
+        <a href="https://www.fiverr.com" target="_blank" class="gig-cta" style="border-color:rgba(98,126,234,0.35);color:#627eea;background:rgba(98,126,234,0.05)">View Gig &#8594;</a>
+      </div>
+    </div>
+
+    <!-- 07 AI VISUAL -->
+    <div class="gig-card sr" style="border-color:rgba(255,100,180,0.18)">
+      <div class="gig-card-accent" style="background:linear-gradient(90deg,#ff64b4,#a78bfa)"></div>
+      <div class="gig-num">07 &middot; VISION</div>
+      <div class="gig-name" style="color:#ff64b4">AI Visual</div>
+      <div class="gig-subtitle">Image Analysis &middot; Vision AI &middot; Multimodal</div>
+      <p class="gig-desc">Multimodal AI pipelines for image classification, object detection, and visual analysis powered by Gemini Vision and fine-tuned vision models.</p>
+      <div class="gig-tags">
+        <span class="tag" style="border-color:rgba(255,100,180,0.3);color:#ff64b4;background:rgba(255,100,180,0.06)">Gemini Vision</span>
+        <span class="tag" style="border-color:rgba(124,58,237,0.3);color:#a78bfa;background:rgba(124,58,237,0.07)">Python</span>
+        <span class="tag" style="border-color:rgba(0,204,255,0.2);color:#00ccff;background:rgba(0,204,255,0.06)">FastAPI</span>
+        <span class="tag" style="border-color:rgba(0,255,136,0.25);color:#00ff88;background:rgba(0,255,136,0.06)">Docker</span>
+      </div>
+      <div class="gig-footer">
+        <div class="gig-price">from <strong style="color:#ff64b4">$120</strong></div>
+        <a href="https://www.fiverr.com" target="_blank" class="gig-cta" style="border-color:rgba(255,100,180,0.3);color:#ff64b4;background:rgba(255,100,180,0.04)">View Gig &#8594;</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<div class="tech-strip">
+  <div class="tech-strip-label">// FULL STACK</div>
+  <div class="tech-list">
+    <span class="tech-item">Python</span><span class="tech-item">FastAPI</span><span class="tech-item">Docker</span>
+    <span class="tech-item">Kubernetes</span><span class="tech-item">BigQuery</span><span class="tech-item">Vertex AI</span>
+    <span class="tech-item">Llama 3 8B</span>
+    <span class="tech-item">dbt</span><span class="tech-item">Airflow</span><span class="tech-item">Plotly</span>
+    <span class="tech-item">Locust</span><span class="tech-item">Nuclei</span><span class="tech-item">Shodan</span>
+    <span class="tech-item">Solidity</span><span class="tech-item">Web3.py</span>
+  </div>
 </div>
-<footer>No credential sharing - Production-ready code - <a href="https://github.com/Argus-Tech-Solutions">GitHub</a></footer>
+
+<div class="section-divider"></div>
+
+<section class="how" id="how">
+  <div class="section-header sr">
+    <div class="section-label">// PROCESS</div>
+    <h2 class="section-title">How It <span>Works</span></h2>
+  </div>
+  <div class="steps">
+    <div class="step sr">
+      <div class="step-num">01</div>
+      <div class="step-title">Order &amp; Brief</div>
+      <div class="step-desc">Choose your package on Fiverr and share your requirements or target.</div>
+    </div>
+    <div class="step sr">
+      <div class="step-num">02</div>
+      <div class="step-title">Build &amp; Automate</div>
+      <div class="step-desc">The pipeline runs — scans, trains, transforms, or deploys based on your gig.</div>
+    </div>
+    <div class="step sr">
+      <div class="step-num">03</div>
+      <div class="step-title">Review &amp; Deliver</div>
+      <div class="step-desc">Output reviewed, packaged, and delivered within 24–48h with documentation.</div>
+    </div>
+    <div class="step sr">
+      <div class="step-num">04</div>
+      <div class="step-title">Support &amp; Iterate</div>
+      <div class="step-desc">Revision requests and premium plans include 30-day post-delivery support.</div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-banner sr">
+  <h2>Ready to run?</h2>
+  <p>7 production services. 24h turnaround. Powered by Argus Intelligence.</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:1.4rem;padding:10px 20px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.1);border-radius:8px;max-width:420px;margin-left:auto;margin-right:auto;">
+        <span style="font-size:1rem">🔒</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6060a0;line-height:1.5">
+          <strong style="color:#00ff88">No prompt sharing.</strong> Your data stays yours.<br>
+          <span style="opacity:0.6">All outputs are yours to own, deploy and modify.</span>
+        </span>
+      </div>
+  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+    <a href="https://www.fiverr.com" target="_blank" class="btn-primary">Order on Fiverr &#8594;</a>
+    <a href="https://github.com/Argus-Tech-Solutions" target="_blank" class="btn-ghost">Argus-Tech-Solutions</a>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-brand">ARGUS INTELLIGENCE</span>
+  <div class="footer-links">
+    <a href="https://github.com/Argus-Tech-Solutions" target="_blank">github.com/Argus-Tech-Solutions</a>
+    <a href="https://github.com/marcosantcs" target="_blank">github.com/marcosantcs</a>
+    <a href="https://www.fiverr.com" target="_blank">fiverr.com</a>
+  </div>
+  <div class="footer-copy">argus-intelligence &middot; marcosantcs &middot; 2026 &middot; All 7 services production-ready</div>
+
+    <div style="margin:0 auto 0.4rem;text-align:center">
+      <a href="https://github.com/Argus-Tech-Solutions/argus-tech-solutions#demo" target="_blank"
+         style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;
+         color:#00ff88;text-decoration:none;border-bottom:1px solid rgba(0,255,136,0.2);
+         padding-bottom:1px">
+         ⬡ Sample outputs &amp; live demo → github.com/Argus-Tech-Solutions/argus-tech-solutions
+      </a>
+    </div>
+</footer>
+
+<script>
+(function(){
+  const c=document.getElementById('particles');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  let mx=-9999,my=-9999;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+  const pts=Array.from({length:70},()=>({
+    x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+    vx:Math.random()*0.5-0.25,vy:Math.random()*0.5-0.25,
+    sz:Math.random()*1.8+0.4,a:Math.random()*0.2+0.05
+  }));
+  const cols=['rgba(0,255,136,','rgba(0,204,255,','rgba(124,58,237,'];
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    pts.forEach((p,i)=>{
+      const dx=p.x-mx,dy=p.y-my,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<130){p.vx+=dx/d*0.12;p.vy+=dy/d*0.12;}
+      p.vx*=0.97;p.vy*=0.97;
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;
+      if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);
+      ctx.fillStyle=cols[i%3]+p.a+')';ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+function countUp(el){
+  const target=parseInt(el.dataset.count);
+  const suffix=el.dataset.suffix||'';
+  let cur=0;
+  const step=Math.max(target/50,0.5);
+  const t=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(t);}el.textContent=Math.round(cur)+suffix;},24);
+}
+
+const obs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      obs.unobserve(e.target);
+    }
+  });
+},{threshold:0.12});
+document.querySelectorAll('.sr').forEach(el=>obs.observe(el));
+
+document.querySelectorAll('.stat-num[data-count]').forEach(el=>{
+  const o=new IntersectionObserver(([e])=>{if(e.isIntersecting){countUp(el);o.unobserve(el);}},{threshold:0.5});
+  o.observe(el);
+});
+</script>
 </body>
 </html>
